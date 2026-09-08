@@ -2,7 +2,39 @@
   "name": "atelier-marketplace",
   "version": "1.0.0",
   "private": true,
-  "scripts": {"dev":"next dev","build":"prisma generate && next build","start":"next start","lint":"tsc --noEmit","typecheck":"tsc --noEmit","db:push":"prisma db push","db:seed":"tsx prisma/seed.ts","postinstall":"prisma generate"},
-  "dependencies": {"@auth/prisma-adapter":"latest","@prisma/client":"^6.16.0","next":"latest","next-auth":"latest","react":"latest","react-dom":"latest","lucide-react":"latest","zustand":"latest","zod":"latest","react-hook-form":"latest","@hookform/resolvers":"latest"},
-  "devDependencies": {"@tailwindcss/postcss":"latest","@types/node":"latest","@types/react":"latest","@types/react-dom":"latest","autoprefixer":"latest","postcss":"latest","prisma":"^6.16.0","tailwindcss":"latest","tsx":"latest","typescript":"latest"}
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "db:push": "prisma db push",
+    "db:seed": "tsx prisma/seed.ts",
+    "postinstall": "prisma generate"
+  },
+  "dependencies": {
+    "@auth/prisma-adapter": "^2.7.4",
+    "@hookform/resolvers": "latest",
+    "@prisma/client": "^6.16.0",
+    "lucide-react": "latest",
+    "next": "^15.5.2",
+    "next-auth": "^4.24.11",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "react-hook-form": "latest",
+    "zod": "latest",
+    "zustand": "latest"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "latest",
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "autoprefixer": "latest",
+    "postcss": "latest",
+    "prisma": "^6.16.0",
+    "tailwindcss": "latest",
+    "tsx": "latest",
+    "typescript": "^5.8.2"
+  }
 }

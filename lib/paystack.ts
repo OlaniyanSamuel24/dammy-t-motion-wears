@@ -1,6 +1,15 @@
 const paystackBaseUrl='https://api.paystack.co';
 
-function secretKey(){const key=process.env.PAYSTACK_SECRET_KEY;if(!key)throw new Error('Paystack secret key is not configured');return key}
+export function isPaystackConfigured(): boolean {
+  const key = process.env.PAYSTACK_SECRET_KEY?.trim();
+  return Boolean(key && key.startsWith('sk_') && key.length > 10);
+}
+
+function secretKey() {
+  const key = process.env.PAYSTACK_SECRET_KEY?.trim();
+  if (!key) throw new Error('Paystack secret key is not configured');
+  return key;
+}
 
 export async function paystackRequest<T>(path:string,init:RequestInit={}){const response=await fetch(`${paystackBaseUrl}${path}`,{...init,headers:{Authorization:`Bearer ${secretKey()}`,'Content-Type':'application/json',...(init.headers||{})},cache:'no-store'});const data=await response.json() as T & {message?:string};if(!response.ok||('status' in data&&data.status===false))throw new Error(data.message||'Paystack request failed');return data}
 

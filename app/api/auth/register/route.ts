@@ -1,3 +1,31 @@
-import {NextResponse} from 'next/server';import {z} from 'zod';import {prisma} from '../../../../lib/prisma';import {hashPassword} from '../../../../lib/password';
-const schema=z.object({name:z.string().trim().min(2).max(80),email:z.string().email().transform(value=>value.toLowerCase()),password:z.string().min(8).max(100)});
-export async function POST(request:Request){try{const input=schema.parse(await request.json());const existing=await prisma.user.findUnique({where:{email:input.email}});if(existing)return NextResponse.json({error:'An account with that email already exists'},{status:409});const user=await prisma.user.create({data:{name:input.name,email:input.email,passwordHash:hashPassword(input.password)}});return NextResponse.json({id:user.id,email:user.email,name:user.name},{status:201})}catch(error){return NextResponse.json({error:error instanceof Error?error.message:'Unable to register'},{status:400})}}
+import {NextResponse} from 'next/server';
+import {z} from 'zod';
+import {prisma} from '../../../../lib/prisma';
+import {hashPassword} from '../../../../lib/password';
+
+const schema = z.object({
+  name: z.string().trim().min(2).max(80),
+  email: z.string().email().transform((value) => value.toLowerCase()),
+  password: z.string().min(8).max(100),
+});
+
+export async function POST(request: Request) {
+  try {
+    const input = schema.parse(await request.json());
+    const existing = await prisma.user.findUnique({where: {email: input.email}});
+    if (existing?.passwordHash) {
+      return NextResponse.json({error: 'An account with that email already exists'}, {status: 409});
+    }
+    const user = existing
+      ? await prisma.user.update({
+          where: {id: existing.id},
+          data: {name: input.name, passwordHash: hashPassword(input.password)},
+        })
+      : await prisma.user.create({
+          data: {name: input.name, email: input.email, passwordHash: hashPassword(input.password)},
+        });
+    return NextResponse.json({id: user.id, email: user.email, name: user.name}, {status: 201});
+  } catch (error) {
+    return NextResponse.json({error: error instanceof Error ? error.message : 'Unable to register'}, {status: 400});
+  }
+}

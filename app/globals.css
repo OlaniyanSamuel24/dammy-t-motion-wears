@@ -1,7 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 @import 'tailwindcss';
 :root { --ink:#171715; --paper:#f7f5f0; --line:#dedbd2; --accent:#b86b3d; }
-*{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif} button{font:inherit;cursor:pointer} .display{font-family:'Playfair Display',serif} .hide-scrollbar::-webkit-scrollbar{display:none} .hide-scrollbar{scrollbar-width:none} a.display,span.display,.display[aria-label="brand"]{font-size:0;letter-spacing:.08em;white-space:normal;color:transparent} a.display::after,span.display::after,.display[aria-label="brand"]::after{content:'DAMMY T & MOTION WEARS';font-family:'Playfair Display',serif;font-size:1rem;line-height:1.1;color:inherit}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+button{font:inherit;cursor:pointer}
+.display{font-family:'Playfair Display',Georgia,'Times New Roman',serif;font-weight:600;letter-spacing:-.02em}
+.hide-scrollbar::-webkit-scrollbar{display:none}
+.hide-scrollbar{scrollbar-width:none}
 section[aria-roledescription="carousel"]>div:first-child>img{object-position:center top!important}
 @media (min-width:768px){section[aria-roledescription="carousel"]>div:first-child>img{left:auto!important;right:0!important;width:52%!important;object-fit:contain!important;object-position:center top!important;background:#292a25}section[aria-roledescription="carousel"]>div:first-child>div{background:linear-gradient(90deg,rgba(41,42,37,.2) 0%,rgba(41,42,37,.08) 46%,rgba(0,0,0,.34) 100%)!important}}
 #story>div>div:last-child{aspect-ratio:3/4!important;overflow:hidden;background:#dedbd2}
@@ -10,4 +15,12 @@ section[aria-roledescription="carousel"]>div:first-child>img{object-position:cen
 @media (min-width:1024px){.global-mobile-menu{display:none!important}}
 @media (max-width:1023px){header a[href="/menu"]{display:none!important}}
 @media (min-width:768px){#story>div>div:last-child{aspect-ratio:4/5!important}}
-.splash-screen{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#171715;color:#f7f5f0;animation:splash-exit .8s ease 1s forwards}.splash-mark{display:flex;flex-direction:column;align-items:center;gap:.2rem;text-align:center;animation:splash-rise .9s ease both}.splash-mark strong{font-family:'Playfair Display',serif;font-size:clamp(2.8rem,9vw,7rem);font-weight:500;line-height:.9;letter-spacing:.02em}.splash-kicker{margin-bottom:1.4rem;color:#e7b79d;font-size:.65rem;font-weight:700;letter-spacing:.28em;text-transform:uppercase}.splash-and{color:#b86b3d;font-family:'Playfair Display',serif;font-size:1.8rem;line-height:1.1}.splash-screen:after{position:absolute;bottom:2rem;color:#f7f5f0aa;content:'DAMMY T & MOTION WEARS';font-size:.55rem;letter-spacing:.25em;text-transform:uppercase}@keyframes splash-rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}@keyframes splash-exit{to{opacity:0;pointer-events:none;visibility:hidden}}@media (prefers-reduced-motion:reduce){.splash-screen{animation-delay:0s;animation-duration:.2s}.splash-mark{animation:none}}
+.splash-screen{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#171715;color:#f7f5f0;animation:splash-exit .8s ease 1s forwards}
+.splash-mark{display:flex;flex-direction:column;align-items:center;gap:.2rem;text-align:center;animation:splash-rise .9s ease both}
+.splash-mark strong{font-family:'Playfair Display',Georgia,serif;font-size:clamp(2.8rem,9vw,7rem);font-weight:600;line-height:.9;letter-spacing:-.03em}
+.splash-kicker{margin-bottom:1.4rem;color:#e7b79d;font-size:.7rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase}
+.splash-and{color:#b86b3d;font-family:'Playfair Display',Georgia,serif;font-size:1.8rem;line-height:1.1}
+.splash-screen:after{position:absolute;bottom:2rem;color:#f7f5f0aa;content:'DAMMY T & MOTION WEARS';font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;font-family:'Plus Jakarta Sans',sans-serif}
+@keyframes splash-rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes splash-exit{to{opacity:0;pointer-events:none;visibility:hidden}}
+@media (prefers-reduced-motion:reduce){.splash-screen{animation-delay:0s;animation-duration:.2s}.splash-mark{animation:none}}

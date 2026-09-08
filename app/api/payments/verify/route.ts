@@ -1,4 +1,60 @@
-import {NextResponse} from 'next/server';import {prisma} from '../../../../lib/prisma';import {requireAuth,authError} from '../../../../lib/authz';import {verifyPaystackTransaction} from '../../../../lib/paystack';
-async function verify(reference:string,userId:string){const order=await prisma.order.findFirst({where:{paymentReference:reference,userId},include:{items:true}});if(!order)throw new Error('Order not found');if(order.paymentStatus==='PAID')return order;const result=await verifyPaystackTransaction(reference);const payment=result.data;if(payment.status!=='success'||payment.currency!=='NGN'||payment.amount!==order.total*100){await prisma.order.update({where:{id:order.id},data:{paymentStatus:payment.status==='abandoned'?'ABANDONED':'FAILED'}});throw new Error('Payment could not be verified')}const updated=await prisma.$transaction(async transaction=>{const claimed=await transaction.order.updateMany({where:{id:order.id,paymentStatus:{not:'PAID'},paymentReference:reference},data:{paymentStatus:'PAID',status:'PAID',paidAt:payment.paid_at?new Date(payment.paid_at):new Date(),paymentChannel:payment.channel,paymentAmount:payment.amount}});if(claimed.count===0)return transaction.order.findUniqueOrThrow({where:{id:order.id}});for(const item of order.items){const stock=await transaction.product.updateMany({where:{id:item.productId,stock:{gte:item.quantity}},data:{stock:{decrement:item.quantity}}});if(stock.count!==1)throw new Error('Payment verified, but an item is no longer available. Contact support for a refund.')}return transaction.order.findUniqueOrThrow({where:{id:order.id}})});return updated}
-export async function GET(request:Request){try{const user=await requireAuth();const reference=new URL(request.url).searchParams.get('reference');if(!reference)return NextResponse.json({error:'Payment reference is required'},{status:400});return NextResponse.json(await verify(reference,user.id))}catch(error){const result=authError(error);return NextResponse.json({error:result.status===400&&error instanceof Error?error.message:result.error},{status:result.status})}}
-export async function POST(request:Request){const body=await request.json();return GET(new Request(`${new URL(request.url).origin}/api/payments/verify?reference=${encodeURIComponent(body.reference||'')}`,{headers:request.headers}))}
+import {NextResponse} from 'next/server';
+import {prisma} from '../../../../lib/prisma';
+import {verifyPaystackTransaction} from '../../../../lib/paystack';
+
+async function verify(reference: string) {
+  const order = await prisma.order.findFirst({where: {paymentReference: reference}, include: {items: true}});
+  if (!order) throw new Error('Order not found');
+  if (order.paymentStatus === 'PAID') return order;
+  const result = await verifyPaystackTransaction(reference);
+  const payment = result.data;
+  if (payment.status !== 'success' || payment.currency !== 'NGN' || payment.amount !== order.total * 100) {
+    await prisma.order.update({
+      where: {id: order.id},
+      data: {paymentStatus: payment.status === 'abandoned' ? 'ABANDONED' : 'FAILED'},
+    });
+    throw new Error('Payment could not be verified');
+  }
+  return prisma.$transaction(async (transaction) => {
+    const claimed = await transaction.order.updateMany({
+      where: {id: order.id, paymentStatus: {not: 'PAID'}, paymentReference: reference},
+      data: {
+        paymentStatus: 'PAID',
+        status: 'PAID',
+        paidAt: payment.paid_at ? new Date(payment.paid_at) : new Date(),
+        paymentChannel: payment.channel,
+        paymentAmount: payment.amount,
+      },
+    });
+    if (claimed.count === 0) return transaction.order.findUniqueOrThrow({where: {id: order.id}});
+    for (const item of order.items) {
+      const stock = await transaction.product.updateMany({
+        where: {id: item.productId, stock: {gte: item.quantity}},
+        data: {stock: {decrement: item.quantity}},
+      });
+      if (stock.count !== 1) {
+        throw new Error('Payment verified, but an item is no longer available. Contact support for a refund.');
+      }
+    }
+    return transaction.order.findUniqueOrThrow({where: {id: order.id}});
+  });
+}
+
+export async function GET(request: Request) {
+  try {
+    const reference = new URL(request.url).searchParams.get('reference');
+    if (!reference) return NextResponse.json({error: 'Payment reference is required'}, {status: 400});
+    return NextResponse.json(await verify(reference));
+  } catch (error) {
+    return NextResponse.json({error: error instanceof Error ? error.message : 'Verification failed'}, {status: 400});
+  }
+}
+
+export async function POST(request: Request) {
+  const body = await request.json();
+  return GET(
+    new Request(`${new URL(request.url).origin}/api/payments/verify?reference=${encodeURIComponent(body.reference || '')}`, {
+      headers: request.headers,
+    }),
+  );
+}

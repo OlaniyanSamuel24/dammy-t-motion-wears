@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 enum Role {
@@ -75,8 +75,8 @@ model Product {
   price          Int
   compareAtPrice Int?
   images         Json
-  sizes          String[]
-  colors         String[]
+  sizes          Json
+  colors         Json
   stock          Int         @default(0)
   rating         Float       @default(0)
   reviewCount    Int         @default(0)

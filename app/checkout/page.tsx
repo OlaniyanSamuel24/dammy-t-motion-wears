@@ -1,4 +1,213 @@
 'use client';
-import Link from 'next/link';import {ArrowLeft,LockKeyhole} from 'lucide-react';import {useEffect,useState} from 'react';import {useStore} from '../../lib/store';import {money} from '../../lib/products';
-const fees={Lagos:3500,Abuja:5000,'Port Harcourt':5000,Other:7000};const paymentMethods={card:'Card',bank_transfer:'Bank transfer',ussd:'USSD'} as const;type Zone=keyof typeof fees;type PaymentMethod=keyof typeof paymentMethods;
-export default function Checkout(){const {cart}=useStore();const [paid,setPaid]=useState(false);const [loading,setLoading]=useState(false);const [error,setError]=useState('');const [paymentMethod,setPaymentMethod]=useState<PaymentMethod>('card');const [form,setForm]=useState({name:'',email:'',phone:'',address:'',zone:'Lagos' as Zone});const subtotal=cart.reduce((sum,item)=>sum+item.price*item.quantity,0);const delivery=subtotal>=150000?0:fees[form.zone];useEffect(()=>{const reference=new URLSearchParams(window.location.search).get('reference');if(!reference)return;setLoading(true);fetch(`/api/payments/verify?reference=${encodeURIComponent(reference)}`).then(async response=>{const body=await response.json();if(!response.ok)throw new Error(body.error||'Payment could not be verified');setPaid(true)}).catch(reason=>setError(reason instanceof Error?reason.message:'Payment verification failed')).finally(()=>setLoading(false))},[]);const update=(key:keyof typeof form,value:string)=>setForm(current=>({...current,[key]:value}));async function pay(){setError('');setLoading(true);try{const orderResponse=await fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:cart.map(item=>({productId:item.id,quantity:item.quantity,size:item.size})),address:form})});const order=await orderResponse.json();if(!orderResponse.ok)throw new Error(order.error||'Please sign in before checking out');const paymentResponse=await fetch('/api/payments/initialize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:order.id,paymentMethod})});const payment=await paymentResponse.json();if(!paymentResponse.ok)throw new Error(payment.error||'Unable to start payment');window.location.assign(payment.authorizationUrl)}catch(reason){setError(reason instanceof Error?reason.message:'Payment could not be started')}finally{setLoading(false)}}if(paid)return <main className="flex min-h-screen items-center justify-center px-5 text-center"><div><p className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)]">Payment confirmed</p><h1 className="display mt-4 text-5xl">Thank you.</h1><Link href="/account" className="mt-8 inline-block bg-[var(--ink)] px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-white">Track your order</Link></div></main>;return <main className="min-h-screen"><header className="border-b border-[var(--line)] px-5 py-5 lg:px-10"><div className="mx-auto flex max-w-[1100px] justify-between"><Link href="/" className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest"><ArrowLeft size={16}/> Shop</Link><span className="text-sm font-semibold uppercase tracking-[.12em]">DAMMY T &amp; MOTION WEARS</span><span className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-[#777]"><LockKeyhole size={14}/> Secure checkout</span></div></header><div className="mx-auto grid max-w-[1100px] gap-12 px-5 py-12 md:grid-cols-[1fr_360px] lg:px-10"><section><h1 className="display text-4xl">Delivery details</h1><div className="mt-8 grid gap-5"><label className="grid gap-2 text-xs">Full name<input required value={form.name} onChange={event=>update('name',event.target.value)} className="border-b border-[var(--line)] bg-transparent py-3 outline-none"/></label><label className="grid gap-2 text-xs">Email<input required type="email" value={form.email} onChange={event=>update('email',event.target.value)} className="border-b border-[var(--line)] bg-transparent py-3 outline-none"/></label><label className="grid gap-2 text-xs">Phone<input required value={form.phone} onChange={event=>update('phone',event.target.value)} className="border-b border-[var(--line)] bg-transparent py-3 outline-none"/></label><label className="grid gap-2 text-xs">Delivery address<input required value={form.address} onChange={event=>update('address',event.target.value)} className="border-b border-[var(--line)] bg-transparent py-3 outline-none"/></label><label className="grid gap-2 text-xs">Delivery zone<select value={form.zone} onChange={event=>update('zone',event.target.value)} className="border-b border-[var(--line)] bg-transparent py-3 outline-none"><option>Lagos</option><option>Abuja</option><option>Port Harcourt</option><option>Other</option></select></label><fieldset><legend className="text-xs">Payment method</legend><div className="mt-3 grid gap-2 sm:grid-cols-3">{Object.entries(paymentMethods).map(([value,label])=><label key={value} className={`border p-3 text-xs ${paymentMethod===value?'border-[var(--ink)] bg-[var(--ink)] text-white':'border-[var(--line)]'}`}><input type="radio" name="paymentMethod" value={value} checked={paymentMethod===value} onChange={()=>setPaymentMethod(value as PaymentMethod)} className="mr-2"/>{label}</label>)}</div></fieldset></div>{error&&<p role="alert" className="mt-5 bg-[#fff0ed] p-3 text-xs text-[#9a3d2c]">{error}</p>}<button onClick={pay} disabled={!cart.length||loading||!form.name||!form.email||!form.phone||!form.address} className="mt-10 w-full bg-[var(--ink)] py-4 text-[11px] font-bold uppercase tracking-widest text-white disabled:opacity-40">{loading?'Processing payment...':'Pay securely with Paystack'}</button></section><aside className="h-fit border border-[var(--line)] p-6"><h2 className="text-[11px] font-bold uppercase tracking-widest">Order summary</h2>{cart.map(item=><div key={`${item.id}-${item.size}`} className="mt-5 flex justify-between gap-3 text-sm"><span>{item.name} × {item.quantity}</span><span>{money(item.price*item.quantity)}</span></div>)}<div className="mt-6 border-t border-[var(--line)] pt-5 text-sm"><div className="flex justify-between"><span>Delivery</span><span>{money(delivery)}</span></div><div className="mt-4 flex justify-between font-semibold"><span>Total</span><span>{money(subtotal+delivery)}</span></div></div></aside></div></main>}
+import Link from 'next/link';
+import {ArrowLeft, LockKeyhole} from 'lucide-react';
+import {useEffect, useState} from 'react';
+import {useStore} from '../../lib/store';
+import {money} from '../../lib/products';
+import {whatsappNumbers, whatsappUrl} from '../../lib/brand';
+import {WhatsAppIcon} from '../../components/icons';
+
+const fees = {Ibadan: 2500, Lagos: 3500, Abuja: 5000, 'Port Harcourt': 5000, Other: 7000};
+const paymentMethods = {
+  whatsapp: 'WhatsApp',
+  card: 'Card',
+  bank_transfer: 'Bank transfer',
+  ussd: 'USSD',
+} as const;
+type Zone = keyof typeof fees;
+type PaymentMethod = keyof typeof paymentMethods;
+
+export default function Checkout() {
+  const {cart} = useStore();
+  const [paid, setPaid] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('whatsapp');
+  const [form, setForm] = useState({name: '', email: '', phone: '', address: '', zone: 'Ibadan' as Zone});
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const delivery = subtotal >= 150000 ? 0 : fees[form.zone];
+
+  useEffect(() => {
+    const reference = new URLSearchParams(window.location.search).get('reference');
+    if (!reference) return;
+    setLoading(true);
+    fetch(`/api/payments/verify?reference=${encodeURIComponent(reference)}`)
+      .then(async (response) => {
+        const body = await response.json();
+        if (!response.ok) throw new Error(body.error || 'Payment could not be verified');
+        setPaid(true);
+      })
+      .catch((reason) => setError(reason instanceof Error ? reason.message : 'Payment verification failed'))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const update = (key: keyof typeof form, value: string) => setForm((current) => ({...current, [key]: value}));
+
+  async function pay() {
+    setError('');
+    setLoading(true);
+    try {
+      const orderResponse = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          items: cart.map((item) => ({productId: item.id, quantity: item.quantity, size: item.size})),
+          address: form,
+        }),
+      });
+      const order = await orderResponse.json();
+      if (!orderResponse.ok) throw new Error(order.error || 'Unable to create order');
+      const paymentResponse = await fetch('/api/payments/initialize', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({orderId: order.id, paymentMethod}),
+      });
+      const payment = await paymentResponse.json();
+      if (!paymentResponse.ok) throw new Error(payment.error || 'Unable to start payment');
+      if (payment.method === 'whatsapp' || payment.whatsappUrl) {
+        window.location.assign(payment.authorizationUrl || payment.whatsappUrl);
+        return;
+      }
+      if (!payment.authorizationUrl) throw new Error('Payment page was not returned. Use WhatsApp checkout instead.');
+      window.location.assign(payment.authorizationUrl);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : 'Payment could not be started');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (paid) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-5 text-center">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[var(--accent)]">Payment confirmed</p>
+          <h1 className="display mt-4 text-5xl">Thank you.</h1>
+          <Link href="/account" className="mt-8 inline-block bg-[var(--ink)] px-6 py-4 text-[11px] font-bold uppercase tracking-widest text-white">
+            Track your order
+          </Link>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen">
+      <header className="border-b border-[var(--line)] px-5 py-5 lg:px-10">
+        <div className="mx-auto flex max-w-[1100px] justify-between">
+          <Link href="/" className="flex items-center justify-center gap-2 text-[11px] font-bold uppercase tracking-widest">
+            <ArrowLeft size={16} /> Shop
+          </Link>
+          <span className="text-sm font-semibold uppercase tracking-[.08em]">DAMMY T &amp; MOTION WEARS</span>
+          <span className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-[#777]">
+            <LockKeyhole size={14} /> Secure checkout
+          </span>
+        </div>
+      </header>
+      <div className="mx-auto grid max-w-[1100px] gap-12 px-5 py-12 md:grid-cols-[1fr_360px] lg:px-10">
+        <section>
+          <h1 className="display text-4xl">Delivery details</h1>
+          <p className="mt-3 text-sm text-[#666]">
+            You can finish on WhatsApp ({whatsappNumbers[0].display} or {whatsappNumbers[1].display}) if card payment is unavailable.
+          </p>
+          <div className="mt-8 grid gap-5">
+            <label className="grid gap-2 text-xs">
+              Full name
+              <input required value={form.name} onChange={(event) => update('name', event.target.value)} className="border-b border-[var(--line)] bg-transparent py-3 outline-none" />
+            </label>
+            <label className="grid gap-2 text-xs">
+              Email
+              <input required type="email" value={form.email} onChange={(event) => update('email', event.target.value)} className="border-b border-[var(--line)] bg-transparent py-3 outline-none" />
+            </label>
+            <label className="grid gap-2 text-xs">
+              Phone
+              <input required value={form.phone} onChange={(event) => update('phone', event.target.value)} className="border-b border-[var(--line)] bg-transparent py-3 outline-none" />
+            </label>
+            <label className="grid gap-2 text-xs">
+              Delivery address
+              <input required value={form.address} onChange={(event) => update('address', event.target.value)} className="border-b border-[var(--line)] bg-transparent py-3 outline-none" />
+            </label>
+            <label className="grid gap-2 text-xs">
+              Delivery zone
+              <select value={form.zone} onChange={(event) => update('zone', event.target.value)} className="border-b border-[var(--line)] bg-transparent py-3 outline-none">
+                <option>Ibadan</option>
+                <option>Lagos</option>
+                <option>Abuja</option>
+                <option>Port Harcourt</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <fieldset>
+              <legend className="text-xs">Payment method</legend>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {Object.entries(paymentMethods).map(([value, label]) => (
+                  <label
+                    key={value}
+                    className={`border p-3 text-xs ${paymentMethod === value ? 'border-[var(--ink)] bg-[var(--ink)] text-white' : 'border-[var(--line)]'}`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value={value}
+                      checked={paymentMethod === value}
+                      onChange={() => setPaymentMethod(value as PaymentMethod)}
+                      className="mr-2"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+          {error && <p role="alert" className="mt-5 bg-[#fff0ed] p-3 text-xs text-[#9a3d2c]">{error}</p>}
+          <button
+            onClick={pay}
+            disabled={!cart.length || loading || !form.name || !form.email || !form.phone || !form.address}
+            className="mt-10 flex w-full items-center justify-center gap-2 bg-[var(--ink)] py-4 text-[11px] font-bold uppercase tracking-widest text-white disabled:opacity-40"
+          >
+            {loading ? (
+              'Processing...'
+            ) : paymentMethod === 'whatsapp' ? (
+              <>
+                <WhatsAppIcon size={16} fill="#25D366" />
+                <span>Send order on WhatsApp</span>
+              </>
+            ) : (
+              'Pay securely'
+            )}
+          </button>
+          <a
+            href={whatsappUrl(whatsappNumbers[0].e164)}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs text-[#666] hover:text-[var(--ink)] underline"
+          >
+            <WhatsAppIcon size={14} fill="#25D366" />
+            <span>Or message the shop directly on WhatsApp</span>
+          </a>
+        </section>
+        <aside className="h-fit border border-[var(--line)] p-6">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest">Order summary</h2>
+          {cart.map((item) => (
+            <div key={`${item.id}-${item.size}`} className="mt-5 flex justify-between gap-3 text-sm">
+              <span>
+                {item.name} × {item.quantity}
+              </span>
+              <span>{money(item.price * item.quantity)}</span>
+            </div>
+          ))}
+          <div className="mt-6 border-t border-[var(--line)] pt-5 text-sm">
+            <div className="flex justify-between">
+              <span>Delivery</span>
+              <span>{money(delivery)}</span>
+            </div>
+            <div className="mt-4 flex justify-between font-semibold">
+              <span>Total</span>
+              <span>{money(subtotal + delivery)}</span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </main>
+  );
+}
