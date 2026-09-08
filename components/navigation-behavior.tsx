@@ -8,9 +8,7 @@ export default function NavigationBehavior(){
       const button=target.closest('button');
       if(!button)return;
       const label=button.getAttribute('aria-label');
-      if(label==='Search')window.location.href='/search';
-      if(label==='Account')window.location.href='/account';
-      if(button.classList.contains('lg:hidden'))window.location.href='/menu';
+      if(label==='Wishlist')window.location.href='/wishlist';
     };
     document.addEventListener('click',handleClick);
     return()=>document.removeEventListener('click',handleClick);
