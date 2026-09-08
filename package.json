@@ -1,0 +1,8 @@
+{
+  "name": "atelier-marketplace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {"dev":"next dev","build":"prisma generate && next build","start":"next start","lint":"next lint","db:push":"prisma db push","db:seed":"tsx prisma/seed.ts","postinstall":"prisma generate"},
+  "dependencies": {"@auth/prisma-adapter":"latest","@prisma/client":"^6.16.0","next":"latest","next-auth":"latest","react":"latest","react-dom":"latest","lucide-react":"latest","zustand":"latest","zod":"latest","react-hook-form":"latest","@hookform/resolvers":"latest"},
+  "devDependencies": {"@tailwindcss/postcss":"latest","@types/node":"latest","@types/react":"latest","@types/react-dom":"latest","autoprefixer":"latest","postcss":"latest","prisma":"^6.16.0","tailwindcss":"latest","tsx":"latest","typescript":"latest"}
+}
